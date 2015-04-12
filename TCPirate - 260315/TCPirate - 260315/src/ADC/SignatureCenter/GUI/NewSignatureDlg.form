@@ -1,0 +1,738 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="ADC.SignatureCenter.GUI.NewSignatureDlg">
+  <grid id="cbd77" binding="contentPane" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="10" left="10" bottom="10" right="10"/>
+    <constraints>
+      <xy x="48" y="9" width="1394" height="600"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties>
+      <autoscrolls value="false"/>
+    </properties>
+    <border type="bevel-lowered"/>
+    <children>
+      <grid id="94766" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="552" y="564" width="830" height="24"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <hspacer id="98af6">
+            <constraints>
+              <xy x="0" y="6" width="414" height="11"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+            </constraints>
+          </hspacer>
+          <grid id="9538f" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="414" y="0" width="416" height="24"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="e7465" class="javax.swing.JButton" binding="buttonOK">
+                <constraints>
+                  <xy x="0" y="0" width="75" height="24"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1">
+                    <minimum-size width="75" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="OK"/>
+                </properties>
+              </component>
+              <component id="5723f" class="javax.swing.JButton" binding="buttonCancel">
+                <constraints>
+                  <xy x="341" y="0" width="75" height="24"/>
+                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1">
+                    <minimum-size width="75" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="Close"/>
+                </properties>
+              </component>
+              <component id="daf54" class="javax.swing.JButton" binding="buttonReset">
+                <constraints>
+                  <xy x="85" y="0" width="75" height="24"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1">
+                    <minimum-size width="75" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="Reset"/>
+                </properties>
+              </component>
+              <component id="c85cf" class="javax.swing.JButton" binding="buttonCopy">
+                <constraints>
+                  <xy x="170" y="0" width="75" height="24"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1">
+                    <minimum-size width="75" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="Copy"/>
+                </properties>
+              </component>
+              <component id="a718a" class="javax.swing.JButton" binding="buttonDelete">
+                <constraints>
+                  <xy x="255" y="0" width="76" height="24"/>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1">
+                    <minimum-size width="75" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <enabled value="true"/>
+                  <text value="Delete"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <grid id="e3588" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="552" y="12" width="830" height="547"/>
+          <grid row="0" column="1" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="cf093" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="0" y="0" width="830" height="547"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="6603d" row-count="1" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="0" y="0" width="830" height="29"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="89265" class="javax.swing.JLabel">
+                    <constraints>
+                      <xy x="0" y="7" width="91" height="14"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Signature Id:"/>
+                    </properties>
+                  </component>
+                  <component id="d8385" class="javax.swing.JTextField" binding="textSigId">
+                    <constraints>
+                      <xy x="101" y="4" width="150" height="21"/>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                        <minimum-size width="150" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <editable value="false"/>
+                      <enabled value="false"/>
+                    </properties>
+                  </component>
+                  <hspacer id="c9c81">
+                    <constraints>
+                      <xy x="557" y="9" width="273" height="11"/>
+                      <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+                    </constraints>
+                  </hspacer>
+                  <component id="a5700" class="javax.swing.JButton" binding="buttonSearch">
+                    <constraints>
+                      <xy x="261" y="2" width="76" height="24"/>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0">
+                        <minimum-size width="75" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="Search"/>
+                    </properties>
+                  </component>
+                  <component id="eb50c" class="javax.swing.JLabel" binding="labelArubaMode">
+                    <constraints>
+                      <xy x="347" y="7" width="100" height="14"/>
+                      <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                        <minimum-size width="100" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="MODE ARUBA"/>
+                    </properties>
+                  </component>
+                  <component id="d34b0" class="javax.swing.JLabel" binding="labelModeFP">
+                    <constraints>
+                      <xy x="457" y="7" width="100" height="14"/>
+                      <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                        <minimum-size width="100" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="MODE FP"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <grid id="8db7a" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="0" y="34" width="830" height="80"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <grid id="cbe02" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <xy x="0" y="0" width="400" height="80"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="2"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="7f8c5" class="javax.swing.JLabel">
+                        <constraints>
+                          <xy x="0" y="3" width="35" height="14"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                        </constraints>
+                        <properties>
+                          <text value="Name:"/>
+                        </properties>
+                      </component>
+                      <component id="a4e32" class="javax.swing.JTextArea" binding="textAreaName">
+                        <constraints>
+                          <xy x="0" y="25" width="400" height="55"/>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="9" fill="2">
+                            <minimum-size width="200" height="50"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <lineWrap value="true"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="76ce2" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <xy x="410" y="0" width="400" height="80"/>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="2"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="69174" class="javax.swing.JLabel">
+                        <constraints>
+                          <xy x="0" y="3" width="56" height="14"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                        </constraints>
+                        <properties>
+                          <text value="Pattern:"/>
+                        </properties>
+                      </component>
+                      <component id="ab9f2" class="javax.swing.JTextArea" binding="textAreaPattern">
+                        <constraints>
+                          <xy x="0" y="25" width="400" height="55"/>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="9" fill="2">
+                            <minimum-size width="400" height="50"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <lineWrap value="true"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                  <hspacer id="57d8c">
+                    <constraints>
+                      <xy x="810" y="34" width="20" height="11"/>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+                    </constraints>
+                  </hspacer>
+                </children>
+              </grid>
+              <grid id="43002" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="0" y="119" width="830" height="27"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="6fa00" class="javax.swing.JLabel">
+                    <constraints>
+                      <xy x="0" y="6" width="49" height="14"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Attack:"/>
+                    </properties>
+                  </component>
+                  <component id="1b377" class="javax.swing.JComboBox" binding="comboBoxAttack">
+                    <constraints>
+                      <xy x="59" y="2" width="300" height="23"/>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
+                        <preferred-size width="300" height="-1"/>
+                        <maximum-size width="400" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties/>
+                  </component>
+                  <hspacer id="d67ac">
+                    <constraints>
+                      <xy x="359" y="8" width="471" height="11"/>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+                    </constraints>
+                  </hspacer>
+                </children>
+              </grid>
+              <grid id="1cd6e" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="0" y="364" width="830" height="183"/>
+                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                </constraints>
+                <properties/>
+                <border type="etched" title="Services"/>
+                <children>
+                  <grid id="b8d02" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <xy x="6" y="20" width="818" height="157"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <grid id="4f69f" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <xy x="0" y="0" width="362" height="157"/>
+                          <grid row="0" column="0" row-span="3" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="8ea2" class="javax.swing.JLabel">
+                            <constraints>
+                              <xy x="0" y="3" width="63" height="14"/>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                            </constraints>
+                            <properties>
+                              <text value="Available"/>
+                            </properties>
+                          </component>
+                          <scrollpane id="6d971">
+                            <constraints>
+                              <xy x="0" y="25" width="362" height="132"/>
+                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+                            </constraints>
+                            <properties/>
+                            <border type="none"/>
+                            <children>
+                              <component id="1a85d" class="javax.swing.JList" binding="listAvailable">
+                                <constraints/>
+                                <properties>
+                                  <selectionMode value="2"/>
+                                </properties>
+                              </component>
+                            </children>
+                          </scrollpane>
+                        </children>
+                      </grid>
+                      <grid id="ffd43" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <xy x="457" y="0" width="361" height="157"/>
+                          <grid row="0" column="2" row-span="3" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="ac495" class="javax.swing.JLabel">
+                            <constraints>
+                              <xy x="0" y="3" width="56" height="14"/>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                            </constraints>
+                            <properties>
+                              <text value="Selected"/>
+                            </properties>
+                          </component>
+                          <scrollpane id="7390a">
+                            <constraints>
+                              <xy x="0" y="25" width="361" height="132"/>
+                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+                            </constraints>
+                            <properties/>
+                            <border type="none"/>
+                            <children>
+                              <component id="db542" class="javax.swing.JList" binding="listSelected">
+                                <constraints/>
+                                <properties>
+                                  <enabled value="true"/>
+                                </properties>
+                              </component>
+                            </children>
+                          </scrollpane>
+                        </children>
+                      </grid>
+                      <component id="e1bf" class="javax.swing.JButton" binding="buttonToSelected">
+                        <constraints>
+                          <xy x="372" y="21" width="75" height="24"/>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0">
+                            <minimum-size width="75" height="-1"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <enabled value="false"/>
+                          <text value="&gt;&gt;&gt;"/>
+                        </properties>
+                      </component>
+                      <component id="9c2fa" class="javax.swing.JButton" binding="buttonToAvailable">
+                        <constraints>
+                          <xy x="372" y="92" width="75" height="24"/>
+                          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0">
+                            <minimum-size width="75" height="-1"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <enabled value="false"/>
+                          <text value="&lt;&lt;&lt;"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                </children>
+              </grid>
+              <grid id="5effc" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="0" y="258" width="830" height="101"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+                </constraints>
+                <properties>
+                  <enabled value="true"/>
+                </properties>
+                <border type="etched" title="Attributes"/>
+                <children>
+                  <grid id="558ed" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <xy x="6" y="20" width="125" height="49"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0">
+                        <minimum-size width="125" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="59bb7" class="javax.swing.JCheckBox" binding="checkBoxCaseSensitive">
+                        <constraints>
+                          <xy x="0" y="0" width="123" height="22"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                        </constraints>
+                        <properties>
+                          <text value="Case Sensitive"/>
+                        </properties>
+                      </component>
+                      <component id="da569" class="javax.swing.JCheckBox" binding="checkBoxDecoded">
+                        <constraints>
+                          <xy x="0" y="27" width="74" height="22"/>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                        </constraints>
+                        <properties>
+                          <enabled value="false"/>
+                          <selected value="true"/>
+                          <text value="Decoded"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="50e7d" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <xy x="141" y="20" width="150" height="23"/>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0">
+                        <minimum-size width="150" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="9734b" class="javax.swing.JLabel">
+                        <constraints>
+                          <xy x="0" y="4" width="56" height="14"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                        </constraints>
+                        <properties>
+                          <text value="Accuracy"/>
+                        </properties>
+                      </component>
+                      <component id="b5cbb" class="javax.swing.JComboBox" binding="comboAccuracy">
+                        <constraints>
+                          <xy x="71" y="0" width="79" height="23"/>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1">
+                            <minimum-size width="75" height="-1"/>
+                          </grid>
+                        </constraints>
+                        <properties/>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="6960" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <xy x="301" y="20" width="175" height="75"/>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0">
+                        <minimum-size width="175" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties/>
+                    <border type="etched" title="Direction"/>
+                    <children>
+                      <grid id="5ae34" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <xy x="6" y="20" width="163" height="49"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="60197" class="javax.swing.JRadioButton" binding="radioButtonDir2Server">
+                            <constraints>
+                              <xy x="0" y="0" width="137" height="22"/>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                            </constraints>
+                            <properties>
+                              <selected value="true"/>
+                              <text value="Client To Server"/>
+                            </properties>
+                          </component>
+                          <component id="dd30c" class="javax.swing.JRadioButton" binding="radioButtonDir2Client">
+                            <constraints>
+                              <xy x="0" y="27" width="137" height="22"/>
+                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                            </constraints>
+                            <properties>
+                              <text value="Server To Client"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                    </children>
+                  </grid>
+                  <hspacer id="91fdb">
+                    <constraints>
+                      <xy x="586" y="52" width="238" height="11"/>
+                      <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+                    </constraints>
+                  </hspacer>
+                  <grid id="d2686" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <xy x="486" y="20" width="100" height="46"/>
+                      <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0">
+                        <minimum-size width="100" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="59e1a" class="javax.swing.JLabel">
+                        <constraints>
+                          <xy x="0" y="3" width="56" height="14"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                        </constraints>
+                        <properties>
+                          <text value="Snort ID"/>
+                        </properties>
+                      </component>
+                      <component id="5e232" class="javax.swing.JTextField" binding="textSnortID">
+                        <constraints>
+                          <xy x="0" y="25" width="100" height="21"/>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1"/>
+                        </constraints>
+                        <properties/>
+                      </component>
+                    </children>
+                  </grid>
+                </children>
+              </grid>
+              <grid id="acd18" row-count="3" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="0" y="151" width="830" height="102"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
+                </constraints>
+                <properties/>
+                <border type="etched" title="Location"/>
+                <children>
+                  <component id="fb7b" class="javax.swing.JCheckBox" binding="checkBoxLocStream">
+                    <constraints>
+                      <xy x="6" y="20" width="100" height="22"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                        <minimum-size width="100" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="Stream"/>
+                    </properties>
+                  </component>
+                  <component id="4ab62" class="javax.swing.JCheckBox" binding="checkBoxLocURL">
+                    <constraints>
+                      <xy x="116" y="20" width="100" height="22"/>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                        <minimum-size width="100" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="URL"/>
+                    </properties>
+                  </component>
+                  <component id="dde0e" class="javax.swing.JCheckBox" binding="checkBoxLocParams">
+                    <constraints>
+                      <xy x="116" y="47" width="100" height="22"/>
+                      <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                        <minimum-size width="100" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="Parameters"/>
+                    </properties>
+                  </component>
+                  <component id="ffcc1" class="javax.swing.JCheckBox" binding="checkBoxLocHeaders">
+                    <constraints>
+                      <xy x="116" y="74" width="74" height="22"/>
+                      <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                        <maximum-size width="100" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="Headers"/>
+                    </properties>
+                  </component>
+                  <component id="fa53d" class="javax.swing.JCheckBox" binding="checkBoxLocQuery">
+                    <constraints>
+                      <xy x="386" y="20" width="100" height="22"/>
+                      <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                        <minimum-size width="100" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <enabled value="false"/>
+                      <text value="Query"/>
+                    </properties>
+                  </component>
+                  <component id="8d713" class="javax.swing.JCheckBox" binding="checkBoxLocParsedQuery">
+                    <constraints>
+                      <xy x="386" y="47" width="109" height="22"/>
+                      <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                        <minimum-size width="100" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="Parsed Query"/>
+                    </properties>
+                  </component>
+                  <hspacer id="b6fee">
+                    <constraints>
+                      <xy x="495" y="25" width="329" height="11"/>
+                      <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+                    </constraints>
+                  </hspacer>
+                  <component id="30e0" class="javax.swing.JCheckBox" binding="checkBoxLocNURL">
+                    <constraints>
+                      <xy x="226" y="20" width="150" height="22"/>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0">
+                        <minimum-size width="150" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="Original URL"/>
+                    </properties>
+                  </component>
+                  <component id="74bd9" class="javax.swing.JCheckBox" binding="checkBoxLocParamURL">
+                    <constraints>
+                      <xy x="226" y="47" width="150" height="22"/>
+                      <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0">
+                        <minimum-size width="150" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="Paramers &amp; URL"/>
+                    </properties>
+                  </component>
+                  <component id="137e" class="javax.swing.JCheckBox" binding="checkBoxLocResponse">
+                    <constraints>
+                      <xy x="226" y="74" width="150" height="22"/>
+                      <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0">
+                        <minimum-size width="150" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="Response Content"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <scrollpane id="4730">
+        <constraints>
+          <xy x="12" y="12" width="200" height="235"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="9" fill="2">
+            <minimum-size width="200" height="-1"/>
+            <maximum-size width="200" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="3e8d" class="javax.swing.JList" binding="listSideSignatures">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="5f3e3" class="javax.swing.JTextArea" binding="textAreaSQL">
+        <constraints>
+          <xy x="12" y="359" width="200" height="200"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="10" fill="0">
+            <minimum-size width="200" height="200"/>
+            <maximum-size width="200" height="400"/>
+          </grid>
+        </constraints>
+        <properties>
+          <lineWrap value="true"/>
+        </properties>
+      </component>
+      <component id="ad0d7" class="javax.swing.JButton" binding="buttonSQL">
+        <constraints>
+          <xy x="12" y="564" width="200" height="24"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="1">
+            <maximum-size width="200" height="-1"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Search"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>
