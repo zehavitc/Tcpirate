@@ -145,6 +145,7 @@ public class TCPirateConnection extends Thread {
         m_listener_current_pos = 0;
     }
 
+    //Open connection to the server
     private Socket openConnection(String host, int port) {
         try {
             InetAddress host_address =  InetAddress.getByName(host);

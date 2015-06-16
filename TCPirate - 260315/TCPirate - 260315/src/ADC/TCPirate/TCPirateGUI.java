@@ -4,8 +4,13 @@ import ADC.Utils.JexepackUtils;
 import org.ini4j.Ini;
 
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 import java.awt.event.*;
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
 
 public class TCPirateGUI extends JFrame {
 
@@ -32,10 +37,15 @@ public class TCPirateGUI extends JFrame {
     private JTextField textDBAAHostName;
     private JTextField textDBAAPort;
     private JTextField textDBAASideChannel;
+    private JCheckBox checkBoxAutomaticProcessing;
+    private JTable tableAutomaticProcessing;
+    private JPanel panelAutomaticProcessing;
+    private JButton buttonAddRow;
+    private JButton buttonDeleteRows;
 
     public TCPirateGUI() {
         super();
-
+        initializeAutomaticProcessingTable();
         m_pirate = TCPirate.getInstance();
 
         setContentPane(contentPane);
@@ -75,6 +85,17 @@ public class TCPirateGUI extends JFrame {
             }
         });
 
+        buttonAddRow.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                onAddRow();
+            }
+        });
+        buttonDeleteRows.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                onDeleteRows();
+            }
+        });
+
         checkBoxDBAAService.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 switchDBAAFieldsState();
@@ -95,6 +116,40 @@ public class TCPirateGUI extends JFrame {
                 onCancel();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+//        //Set Automatic processing table visibility based on check box
+        checkBoxAutomaticProcessing.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                onAutomaticProcessingCheck(e);
+            }
+        });
+    }
+
+    private void onAddRow() {
+        ((AutomaticProcessingTableModel)tableAutomaticProcessing.getModel()).addNewRow();
+    }
+
+    private void onDeleteRows() {
+        int[] selectedRows = tableAutomaticProcessing.getSelectedRows();
+        Vector<Integer> selectedRowsInt = new Vector<Integer>();
+        for (int i=0; i<selectedRows.length; i++) {
+            selectedRowsInt.add(selectedRows[i]);
+        }
+        Object[] selectedRowsOrdered = selectedRowsInt.toArray();
+        Arrays.sort(selectedRowsOrdered,Collections.reverseOrder());
+        for (int i=0; i<selectedRowsInt.size(); i++){
+            ((AutomaticProcessingTableModel)tableAutomaticProcessing.getModel()).removeRow(selectedRowsInt.get(i)-i);
+        }
+    }
+
+
+    private void onAutomaticProcessingCheck(ActionEvent e) {
+        if (checkBoxAutomaticProcessing.isSelected()){
+            panelAutomaticProcessing.setVisible(true);
+        }
+        else{
+            panelAutomaticProcessing.setVisible(false);
+        }
     }
 
     private void switchDBAAFieldsState() {
@@ -110,7 +165,33 @@ public class TCPirateGUI extends JFrame {
         }
     }
 
-    private void chooseFile() {
+    public void initializeAutomaticProcessingTable() {
+        tableAutomaticProcessing.setModel(new AutomaticProcessingTableModel());
+        TableColumn actionColumn = tableAutomaticProcessing.getColumnModel().getColumn(AutomaticProcessingTableModel.actionColumn);
+        JComboBox comboBoxAction = new JComboBox();
+        comboBoxAction.addItem(AutomaticProcessingRow.Actions.Read.toString());
+        comboBoxAction.addItem(AutomaticProcessingRow.Actions.Write.toString());
+        comboBoxAction.addItem(AutomaticProcessingRow.Actions.Modify.toString());
+        actionColumn.setCellEditor(new DefaultCellEditor(comboBoxAction));
+
+        JComboBox comboBoxFunction = new JComboBox();
+        comboBoxFunction.addItem(AutomaticProcessingRow.Functions.Or.toString());
+        comboBoxFunction.addItem(AutomaticProcessingRow.Functions.And.toString());
+        comboBoxFunction.addItem(AutomaticProcessingRow.Functions.Plus.toString());
+        comboBoxFunction.addItem(AutomaticProcessingRow.Functions.Custom.toString());
+        TableColumn functionColumn = tableAutomaticProcessing.getColumnModel().getColumn(AutomaticProcessingTableModel.functionColumn);
+        functionColumn.setCellEditor(new DefaultCellEditor(comboBoxFunction));
+
+
+        for (int index = 0; index < (tableAutomaticProcessing.getColumnCount()) ; index++) {
+            tableAutomaticProcessing.getColumnModel().getColumn(index).setPreferredWidth(90);
+        }
+        tableAutomaticProcessing.getColumnModel().getColumn(3).setPreferredWidth(100);
+        tableAutomaticProcessing.setAutoscrolls(true);
+        tableAutomaticProcessing.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+    }
+
+        private void chooseFile() {
         JFileChooser chooser = new JFileChooser();
 
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -211,7 +292,8 @@ public class TCPirateGUI extends JFrame {
         textHostName.setText(props.host);
         checkBoxTrapRequest.setSelected(props.trapRequest);
         checkBoxTrapResponse.setSelected(props.trapResponse);
-
+        checkBoxAutomaticProcessing.setSelected(false);
+        onAutomaticProcessingCheck(null);
         textFileSuffix.setText(TCPirate.DEFAULT_FILE_SUFFIX);
 
 
@@ -278,4 +360,7 @@ public class TCPirateGUI extends JFrame {
     }
 
 
+    private void createUIComponents() {
+        // TODO: place custom component creation code here
+    }
 }
