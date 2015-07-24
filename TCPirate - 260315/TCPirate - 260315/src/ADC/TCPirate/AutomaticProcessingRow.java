@@ -9,7 +9,7 @@ import java.util.Dictionary;
  */
 public class AutomaticProcessingRow {
 
-    public enum Actions {Read,Write,Modify}
+    public enum Actions {Read,Modify}
     public enum Functions {Or,And,Plus,Custom}
     public String packetFilter;
     public String fieldOffset;
@@ -19,9 +19,11 @@ public class AutomaticProcessingRow {
     public Functions function;
     public String variable;
     public String functionInput;
+    public String filterFunction;
 
     public AutomaticProcessingRow(){
         packetFilter = "";
+        filterFunction="";
         fieldOffset = "";
         fieldLength = "";
         fieldBaseString = "";
@@ -34,13 +36,14 @@ public class AutomaticProcessingRow {
     public String get(int columnIndex){
         switch (columnIndex){
             case 0:return packetFilter;
-            case 1:return fieldOffset;
-            case 2: return  fieldLength;
-            case 3: return fieldBaseString;
-            case 4: return action.toString();
-            case 5: return variable;
-            case 6: return function.toString();
-            case 7: return  functionInput;
+            case 1:return filterFunction;
+            case 2:return fieldOffset;
+            case 3: return  fieldLength;
+            case 4: return fieldBaseString;
+            case 5: return action.toString();
+            case 6: return variable;
+            case 7: return function.toString();
+            case 8: return  functionInput;
             default:return "";
         }
     }
@@ -51,24 +54,27 @@ public class AutomaticProcessingRow {
                 packetFilter = value;
                 return;
             case 1:
-                fieldOffset = value;
+                filterFunction = value;
                 return;
             case 2:
-                fieldLength = value;
+                fieldOffset = value;
                 return;
             case 3:
-                fieldBaseString = value;
+                fieldLength = value;
                 return;
             case 4:
-                action = Actions.valueOf(value);
+                fieldBaseString = value;
                 return;
             case 5:
-                variable = value;
+                action = Actions.valueOf(value);
                 return;
             case 6:
-                function = Functions.valueOf(value);
+                variable = value;
                 return;
             case 7:
+                function = Functions.valueOf(value);
+                return;
+            case 8:
                 functionInput = value;
         }
 

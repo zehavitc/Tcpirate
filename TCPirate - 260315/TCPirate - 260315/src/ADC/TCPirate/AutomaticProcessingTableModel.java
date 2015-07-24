@@ -1,10 +1,13 @@
 package ADC.TCPirate;
 
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 
 
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import java.awt.*;
 import java.io.File;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -15,6 +18,7 @@ public class AutomaticProcessingTableModel extends AbstractTableModel {
 
     public static String[] columnNames = new String[]{
             "Filter",
+            "Filter Function",
             "Offset",
             "Length",
             "Base string",
@@ -25,9 +29,9 @@ public class AutomaticProcessingTableModel extends AbstractTableModel {
     };
 
     private Vector <AutomaticProcessingRow> rowData;
-    public static int actionColumn = 4;
-    public static int functionColumn = 6;
-    public static int functionInputColumn = 7;
+    public static int actionColumn = 5;
+    public static int functionColumn = 7;
+    public static int functionInputColumn = 8;
     public static Integer[] columnsToHideOnRead = new Integer[]{functionColumn,functionInputColumn};
     @Override
     public int getRowCount() {
@@ -50,6 +54,8 @@ public class AutomaticProcessingTableModel extends AbstractTableModel {
         }
         return "";
     }
+
+
 
     @Override
     public void setValueAt(Object value, int row, int col) {

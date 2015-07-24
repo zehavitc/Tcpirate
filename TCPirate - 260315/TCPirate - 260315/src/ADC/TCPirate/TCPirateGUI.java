@@ -42,6 +42,8 @@ public class TCPirateGUI extends JFrame {
     private JPanel panelAutomaticProcessing;
     private JButton buttonAddRow;
     private JButton buttonDeleteRows;
+    private JTextField jarPath;
+    private JTextField jarClassName;
 
     public TCPirateGUI() {
         super();
@@ -170,7 +172,6 @@ public class TCPirateGUI extends JFrame {
         TableColumn actionColumn = tableAutomaticProcessing.getColumnModel().getColumn(AutomaticProcessingTableModel.actionColumn);
         JComboBox comboBoxAction = new JComboBox();
         comboBoxAction.addItem(AutomaticProcessingRow.Actions.Read.toString());
-        comboBoxAction.addItem(AutomaticProcessingRow.Actions.Write.toString());
         comboBoxAction.addItem(AutomaticProcessingRow.Actions.Modify.toString());
         actionColumn.setCellEditor(new DefaultCellEditor(comboBoxAction));
 
@@ -186,9 +187,10 @@ public class TCPirateGUI extends JFrame {
         for (int index = 0; index < (tableAutomaticProcessing.getColumnCount()) ; index++) {
             tableAutomaticProcessing.getColumnModel().getColumn(index).setPreferredWidth(90);
         }
-        tableAutomaticProcessing.getColumnModel().getColumn(3).setPreferredWidth(100);
+        tableAutomaticProcessing.getColumnModel().getColumn(4).setPreferredWidth(100);
         tableAutomaticProcessing.setAutoscrolls(true);
         tableAutomaticProcessing.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        tableAutomaticProcessing.setRowMargin(-4);
     }
 
         private void chooseFile() {
