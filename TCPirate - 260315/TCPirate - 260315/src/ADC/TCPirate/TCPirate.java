@@ -95,6 +95,8 @@ public class TCPirate {
             m_relay.setDBAAAddress(m_dialog.getDBAAHostName());
             m_relay.setDBAAPort(m_dialog.getDBAAPort());
             m_relay.setDBAASideChannelID(m_dialog.getDBAASideChannelID());
+            m_relay.setAutomaticProcessing(m_dialog.getAutomaticProcessing());
+            m_relay.setAutomaticProcessingTable(m_dialog.getAutomaticProcessingTable());
 
             m_relay.start();
         } catch (Exception ex) {

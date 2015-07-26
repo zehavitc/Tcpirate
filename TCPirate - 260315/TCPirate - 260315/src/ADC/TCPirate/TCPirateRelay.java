@@ -22,6 +22,11 @@ public class TCPirateRelay extends Thread {
     private boolean m_trap_request = false;
     private boolean m_trap_response = false;
 
+    // ------ Members added for Automatic processing -------
+
+    private boolean m_automatic_processing = false;
+    private AutomaticProcessingTableModel m_automatic_processing_table;
+
     // ------ Members added for DBAA service -------
     private String m_dbaa_address;
     private int m_dbaa_port;
@@ -99,12 +104,28 @@ public class TCPirateRelay extends Thread {
         m_trap_response = trap;
     }
 
+    public void setAutomaticProcessing(boolean automaticProcessing){
+        m_automatic_processing = automaticProcessing;
+    }
+
+    public void setAutomaticProcessingTable(AutomaticProcessingTableModel automaticProcessingTable){
+        m_automatic_processing_table = automaticProcessingTable;
+    }
+
     public boolean getTrapRequest() {
         return m_trap_request;
     }
 
     public boolean getTrapResponse() {
         return m_trap_response;
+    }
+
+    public boolean getAutomaticProcessing() {
+        return m_automatic_processing;
+    }
+
+    public AutomaticProcessingTableModel getAutomaticProcssingTable(){
+        return m_automatic_processing_table;
     }
 
     // Connection information

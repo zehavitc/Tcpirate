@@ -4,16 +4,18 @@ import ADC.DBAAMessages.ChallengeRequest;
 import ADC.DBAAMessages.Message;
 import ADC.DBAAMessages.ReCAPTCHARequest;
 import ADC.DBAAMessages.Status;
-import ADC.Utils.KMPMatch;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.math.*;
 //import java.nio.charset.Charset;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
 
@@ -42,6 +44,20 @@ public class TCPirateConnection extends Thread {
 
     private String m_server_host;
     private int m_server_port;
+
+    // ------ Members added for automatic processing -------
+    private boolean m_is_state_completed;
+    private byte[] m_state_buffer;
+    private boolean m_is_automatic_processing;
+    private AutomaticProcessingTableModel m_automatic_processing_table;
+    private LinkedHashMap<String,byte[]> m_variables;
+    private String m_jar_path;
+    private String m_jar_class;
+    private Object m_jar_class_instance;
+    private byte[] m_end_of_state = new byte[]{1,4,4,0,0};
+    private boolean m_still_processing;
+    private byte[] m_processing_buffer;
+    private int m_current_processing_row;
 
     // ------ Members added for DBAA service -------
     private boolean m_use_dbaa_service;
@@ -204,6 +220,12 @@ public class TCPirateConnection extends Thread {
             }
         }
 
+        if (m_trap_request && m_is_automatic_processing){
+            m_is_state_completed = getPacketsState();
+            updateProcessingBuffer();
+            processPacket();
+        }
+
         if (m_trap_request || m_trap_plugin.shouldTrap(m_relay_buffer, TCPirateTrapPlugin.TRAP_DIR_TO_SERVER)) {
             m_hex_editor.loadBuffer(m_relay_buffer, m_relay_current_pos);
             m_hex_editor.fireTableStructureChanged();
@@ -212,6 +234,182 @@ public class TCPirateConnection extends Thread {
         } else
             sendToServer();
 
+    }
+
+
+    private void processPacket() {
+        if (!m_still_processing){
+            m_current_processing_row = getFirstMatch();
+            if (m_current_processing_row == -1){
+                FinishProcessing();
+                return;
+            }
+        }
+        AutomaticProcessingRow row = m_automatic_processing_table.getRow(m_current_processing_row);
+        int length = Integer.parseInt(row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.lengthColumn)));
+        String baseString = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.baseStringColumn));
+        String packets = new String(m_processing_buffer);
+        if (baseString != ""){
+            int baseStringIndex = packets.indexOf(baseString);
+            //TODO: Ask Sara if it's ok
+            if (baseStringIndex == -1){
+                FinishProcessing();
+                return;
+            }
+            if (m_processing_buffer.length - (baseStringIndex+baseString.length())  < length){
+                m_still_processing = true;
+                return;
+            }
+            applyAction(row, baseStringIndex + baseString.length(), length);
+            FinishProcessing();
+        }
+        else{
+            int offset = Integer.parseInt(row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.offsetColumn)));
+            if (m_processing_buffer.length - offset < length){
+                m_still_processing = true;
+                return;
+            }
+            applyAction(row, offset, length);
+            FinishProcessing();
+        }
+    }
+
+    private void FinishProcessing() {
+        sendToServer();
+        if (m_is_state_completed){
+            m_state_buffer = new byte[]{};
+        }
+    }
+
+    private void applyAction(AutomaticProcessingRow row, int startIndex, int length) {
+        String variableName = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.variableColumn));
+        if (row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.actionColumn)).equals(AutomaticProcessingRow.Actions.Read)){
+            byte[] value = new byte[length];
+            System.arraycopy(m_relay_buffer,startIndex,value,0,length);
+            m_variables.put(variableName,value);
+            return;
+        }
+        if (row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.actionColumn)).equals(AutomaticProcessingRow.Actions.Modify)){
+            String input = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.inputColumn));
+            String function = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.functionColumn));
+            if (function.equals(AutomaticProcessingRow.Functions.And.toString())){
+                ApplyBitwiseAnd(startIndex, length, variableName, input);
+                return;
+            }
+            if (function.equals(AutomaticProcessingRow.Functions.Or.toString())){
+                ApplyBitwiseOr(startIndex, length, variableName, input);
+                return;
+            }
+            if (function.equals(AutomaticProcessingRow.Functions.Plus.toString())){
+                ApplyBitwisePlus(startIndex, length, variableName, input);
+                return;
+            }
+            else{
+                //Custom modify
+                try {
+                    row.functionInstance.invoke(m_processing_buffer,m_is_state_completed, m_state_buffer,m_variables);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+    }
+
+    private void ApplyBitwisePlus(int startIndex, int length, String variableName, String input) {
+        byte[] variableValue = m_variables.get(variableName);
+        byte[] inputValue = input.getBytes();
+        if (inputValue.length != variableValue.length){
+            //TODO: throw exception
+        }
+        byte[] res = new byte[input.length()];
+        for(int i=0; i< input.length(); i++){
+            res[i] = (byte) (variableValue[i] + inputValue[i]);
+        }
+        System.arraycopy(res,0,m_relay_buffer,startIndex,length);
+    }
+
+    private void ApplyBitwiseOr(int startIndex, int length, String variableName, String input) {
+        byte[] variableValue = m_variables.get(variableName);
+        byte[] inputValue = input.getBytes();
+        if (inputValue.length != variableValue.length){
+            //TODO: throw exception
+        }
+        byte[] res = new byte[input.length()];
+        for(int i=0; i< input.length(); i++){
+            res[i] = (byte) (variableValue[i] | inputValue[i]);
+        }
+        System.arraycopy(res,0,m_relay_buffer,startIndex,length);
+    }
+
+    private void ApplyBitwiseAnd(int startIndex, int length, String variableName, String input) {
+        byte[] variableValue = m_variables.get(variableName);
+        byte[] inputValue = input.getBytes();
+        if (inputValue.length != variableValue.length){
+            //TODO: throw exception
+        }
+        byte[] res = new byte[input.length()];
+        for(int i=0; i< input.length(); i++){
+            res[i] = (byte) (variableValue[i] & inputValue[i]);
+        }
+        System.arraycopy(res,0,m_relay_buffer,startIndex,length);
+    }
+
+    private int getFirstMatch() {
+        try {
+            for (int index = 0; index < m_automatic_processing_table.getRowCount(); index++) {
+                AutomaticProcessingRow row = m_automatic_processing_table.getRow(index);
+                String filterRegex = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.filterColumn));
+                String packet = new String(m_relay_buffer);
+                if (!packet.matches(filterRegex)) continue;
+                if (row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.filterFunctionColumn)) != "") {
+                    if (!(boolean) (row.filterFunctionInstance.invoke(m_relay_buffer, m_is_state_completed, m_state_buffer))) {
+                        continue;
+                    }
+                    return index;
+                }
+            }
+            return -1;
+        }
+        catch (IllegalAccessException e) {
+                e.printStackTrace();
+        }
+        catch (InvocationTargetException e) {
+                e.printStackTrace();
+        }
+        return -1;
+    }
+
+    private void updateProcessingBuffer() {
+        if (m_still_processing){
+            byte[] temp = m_processing_buffer.clone();
+            m_processing_buffer = new byte[temp.length + m_relay_buffer.length];
+            System.arraycopy(temp,0,m_processing_buffer,0,temp.length);
+            System.arraycopy(m_relay_buffer,0,m_processing_buffer, temp.length,m_relay_buffer.length);
+        }
+        else{
+            m_processing_buffer = m_relay_buffer.clone();
+        }
+
+    }
+
+    private boolean getPacketsState(){
+        byte[] temp = m_state_buffer.clone();
+        int newSize = temp.length + m_relay_buffer.length;
+        m_state_buffer = new byte[newSize];
+        if (temp.length != 0){
+            System.arraycopy(temp,0,m_state_buffer,0,temp.length);
+        }
+        System.arraycopy(m_relay_buffer,0,m_state_buffer,temp.length,m_relay_buffer.length);
+        int initialBufferIndex = m_relay_buffer.length - m_end_of_state.length;
+        if (initialBufferIndex + m_end_of_state.length < m_relay_buffer.length || initialBufferIndex < 0) return false;
+        for (int index = 0; index < m_end_of_state.length; index++){
+            if (m_relay_buffer[index+initialBufferIndex]!= m_end_of_state[index])
+                return false;
+        }
+        return true;
     }
 
     private boolean dbaaPolicyTriggered(byte[] relay_buffer) {
@@ -299,6 +497,11 @@ public class TCPirateConnection extends Thread {
 
     public void sendToServer() {
         try {
+            if (m_is_automatic_processing){
+                int size = m_processing_buffer.length;
+                dumpBufferToSocket(m_processing_buffer, size, m_out_socket.getOutputStream());
+                dumpBufferToFile(m_processing_buffer, size, messageFileName(true));
+            }
             if (m_hex_editor.isChanged()) {
                 byte[] data = m_hex_editor.getData();
                 int size = m_hex_editor.getDataSize();
@@ -361,7 +564,7 @@ public class TCPirateConnection extends Thread {
 
     public void dumpBufferToSocket(byte[] p_data, int p_len, OutputStream p_os) {
         try {
-            p_os.write(p_data, 0,p_len);
+            p_os.write(p_data, 0, p_len);
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new RuntimeException(ex);
@@ -505,6 +708,21 @@ public class TCPirateConnection extends Thread {
 
             m_hex_editor = new HexEditorTableModel(1000000);
 
+            //Prepare  for automatic processing
+            if (m_is_automatic_processing) {
+                //Load jar
+                if (m_jar_path != "" && m_jar_class != "") {
+                    File jarFile = new File(m_jar_path);
+                    URL jarUrl = jarFile.toURI().toURL();
+                    URLClassLoader child = new URLClassLoader(new URL[]{jarUrl}, this.getClass().getClassLoader());
+                    Class classToLoad = Class.forName(m_jar_class, true, child);
+                    m_jar_class_instance = classToLoad.newInstance();
+                }
+
+                m_variables = new LinkedHashMap<>();
+
+            }
+
             // Create a socket to the server
             m_out_socket = openConnection(m_server_host, m_server_port);
 
@@ -603,6 +821,21 @@ public class TCPirateConnection extends Thread {
 
     public void setTrapResponse(boolean flag) {
         m_trap_response = flag;
+    }
+
+    // ------ Automatic processing  -------
+
+    public void setAutomaticProcessing(boolean isAutomaticProcessing){
+        m_is_automatic_processing = isAutomaticProcessing;
+    }
+
+    public void setAutomaticProcessingTable(AutomaticProcessingTableModel automaticProcessingTable){
+        m_automatic_processing_table = automaticProcessingTable;
+    }
+
+    public void setJarInformation(String jarPath,String jarClass){
+        m_jar_path = jarPath;
+        m_jar_class = jarClass;
     }
 
     // ------ DBAA server connection information  -------

@@ -2,7 +2,9 @@ package ADC.TCPirate;
 
 import com.sun.org.apache.bcel.internal.generic.SWITCH;
 
+import java.lang.reflect.Method;
 import java.util.Dictionary;
+import java.util.LinkedHashMap;
 
 /**
  * Created by zehavitc on 6/16/2015.
@@ -20,6 +22,8 @@ public class AutomaticProcessingRow {
     public String variable;
     public String functionInput;
     public String filterFunction;
+    public Method filterFunctionInstance;
+    public Method functionInstance;
 
     public AutomaticProcessingRow(){
         packetFilter = "";
@@ -78,6 +82,24 @@ public class AutomaticProcessingRow {
                 functionInput = value;
         }
 
+    }
+
+    public boolean isCustomFunction(){
+        return action.equals(Actions.Modify.toString()) && function.equals(Functions.Custom.toString());
+    }
+
+
+    public void loadFunctions(Class jarClass){
+        try {
+            if (filterFunction != "") {
+                filterFunctionInstance = jarClass.getDeclaredMethod(filterFunction, byte[].class, boolean.class, byte[].class);
+            }
+            if (isCustomFunction()) {
+                functionInstance = jarClass.getDeclaredMethod(functionInput, byte[].class, boolean.class, byte[].class, LinkedHashMap.class);
+            }
+        }catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
     }
 }
 

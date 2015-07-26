@@ -44,6 +44,7 @@ public class TCPirateGUI extends JFrame {
     private JButton buttonDeleteRows;
     private JTextField jarPath;
     private JTextField jarClassName;
+    private AutomaticProcessingTableModel automaticProcessingTableModel;
 
     public TCPirateGUI() {
         super();
@@ -138,7 +139,7 @@ public class TCPirateGUI extends JFrame {
             selectedRowsInt.add(selectedRows[i]);
         }
         Object[] selectedRowsOrdered = selectedRowsInt.toArray();
-        Arrays.sort(selectedRowsOrdered,Collections.reverseOrder());
+        Arrays.sort(selectedRowsOrdered, Collections.reverseOrder());
         for (int i=0; i<selectedRowsInt.size(); i++){
             ((AutomaticProcessingTableModel)tableAutomaticProcessing.getModel()).removeRow(selectedRowsInt.get(i)-i);
         }
@@ -168,8 +169,9 @@ public class TCPirateGUI extends JFrame {
     }
 
     public void initializeAutomaticProcessingTable() {
-        tableAutomaticProcessing.setModel(new AutomaticProcessingTableModel());
-        TableColumn actionColumn = tableAutomaticProcessing.getColumnModel().getColumn(AutomaticProcessingTableModel.actionColumn);
+        automaticProcessingTableModel = new AutomaticProcessingTableModel();
+        tableAutomaticProcessing.setModel(automaticProcessingTableModel);
+        TableColumn actionColumn = tableAutomaticProcessing.getColumnModel().getColumn(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.actionColumn));
         JComboBox comboBoxAction = new JComboBox();
         comboBoxAction.addItem(AutomaticProcessingRow.Actions.Read.toString());
         comboBoxAction.addItem(AutomaticProcessingRow.Actions.Modify.toString());
@@ -180,7 +182,7 @@ public class TCPirateGUI extends JFrame {
         comboBoxFunction.addItem(AutomaticProcessingRow.Functions.And.toString());
         comboBoxFunction.addItem(AutomaticProcessingRow.Functions.Plus.toString());
         comboBoxFunction.addItem(AutomaticProcessingRow.Functions.Custom.toString());
-        TableColumn functionColumn = tableAutomaticProcessing.getColumnModel().getColumn(AutomaticProcessingTableModel.functionColumn);
+        TableColumn functionColumn = tableAutomaticProcessing.getColumnModel().getColumn(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.functionColumn));
         functionColumn.setCellEditor(new DefaultCellEditor(comboBoxFunction));
 
 
@@ -319,6 +321,13 @@ public class TCPirateGUI extends JFrame {
     public String getHostName() {
         return textHostName.getText();
     }
+    public String getJarPath() {
+        return jarPath.getText();
+    }
+    public String getJarClass() {
+        return jarClassName.getText();
+    }
+
 
     public int getPortNumber() {
         return Integer.parseInt(textPortNumber.getText());
@@ -334,6 +343,14 @@ public class TCPirateGUI extends JFrame {
 
     public boolean getTrapResponse() {
         return checkBoxTrapResponse.isSelected();
+    }
+
+    public boolean getAutomaticProcessing() {
+        return checkBoxAutomaticProcessing.isSelected();
+    }
+
+    public AutomaticProcessingTableModel getAutomaticProcessingTable() {
+        return  automaticProcessingTableModel;
     }
 
     /////// DBAA server connection information ///////////
