@@ -32,8 +32,8 @@ public class AutomaticProcessingTableModel extends AbstractTableModel {
         columns.put(filterColumn,0);
         columns.put(filterFunctionColumn,1);
         columns.put(offsetColumn,2);
-        columns.put(lengthColumn,3);
-        columns.put(baseStringColumn,4);
+        columns.put(baseStringColumn,3);
+        columns.put(lengthColumn,4);
         columns.put(actionColumn,5);
         columns.put(variableColumn,6);
         columns.put(functionColumn,7);
