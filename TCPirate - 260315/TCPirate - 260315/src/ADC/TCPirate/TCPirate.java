@@ -97,7 +97,8 @@ public class TCPirate {
             m_relay.setDBAASideChannelID(m_dialog.getDBAASideChannelID());
             m_relay.setAutomaticProcessing(m_dialog.getAutomaticProcessing());
             m_relay.setAutomaticProcessingTable(m_dialog.getAutomaticProcessingTable());
-
+            m_relay.setJarPath(m_dialog.getJarPath());
+            m_relay.setJarClass(m_dialog.getJarClass());
             m_relay.start();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -141,6 +142,9 @@ public class TCPirate {
                 throw new RuntimeException("Cannot create output folder");
                 
         TCPirateConnection conn = new TCPirateConnection(this);
+        conn.setAutomaticProcessing(m_dialog.getAutomaticProcessing());
+        conn.setAutomaticProcessingTable(m_dialog.getAutomaticProcessingTable());
+        conn.setJarInformation(m_dialog.getJarPath(),m_dialog.getJarClass());
         conn.start();
     }
 

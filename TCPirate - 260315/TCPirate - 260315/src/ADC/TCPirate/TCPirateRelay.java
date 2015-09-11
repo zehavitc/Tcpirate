@@ -26,6 +26,8 @@ public class TCPirateRelay extends Thread {
 
     private boolean m_automatic_processing = false;
     private AutomaticProcessingTableModel m_automatic_processing_table;
+    private String m_jar_path;
+    private String m_jar_class;
 
     // ------ Members added for DBAA service -------
     private String m_dbaa_address;
@@ -86,6 +88,9 @@ public class TCPirateRelay extends Thread {
                 connection.setDBAAHost(m_dbaa_address);
                 connection.setDBAAPort(m_dbaa_port);
                 connection.setDBAASideChannelID(m_dbaa_side_channel_id);
+                connection.setAutomaticProcessing(m_automatic_processing);
+                connection.setAutomaticProcessingTable(m_automatic_processing_table);
+                connection.setJarInformation(m_jar_path, m_jar_class);
                 connection.start();
             }
         } catch (Exception ex) {
@@ -94,6 +99,7 @@ public class TCPirateRelay extends Thread {
             System.out.println("Closing Relay");
         }
     }
+
 
     // Trapping related information
     public void setTrapRequest(boolean trap) {
@@ -112,6 +118,14 @@ public class TCPirateRelay extends Thread {
         m_automatic_processing_table = automaticProcessingTable;
     }
 
+    public void setJarPath(String jar_path){
+        m_jar_class = jar_path;
+    }
+
+    public void setJarClass(String jar_class){
+        m_jar_class = jar_class;
+    }
+
     public boolean getTrapRequest() {
         return m_trap_request;
     }
@@ -120,13 +134,6 @@ public class TCPirateRelay extends Thread {
         return m_trap_response;
     }
 
-    public boolean getAutomaticProcessing() {
-        return m_automatic_processing;
-    }
-
-    public AutomaticProcessingTableModel getAutomaticProcssingTable(){
-        return m_automatic_processing_table;
-    }
 
     // Connection information
     public int getSourcePort() {

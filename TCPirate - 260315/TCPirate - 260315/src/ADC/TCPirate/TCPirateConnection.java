@@ -56,7 +56,6 @@ public class TCPirateConnection extends Thread {
     private Object m_jar_class_instance;
     private byte[] m_end_of_state = new byte[]{1,4,4,0,0};
     private boolean m_still_processing;
-    //private byte[] m_processing_buffer;
     private ArrayList<byte[]> m_on_process_packets;
     private ProcessLocation m_location;
     private int m_current_processing_row;
@@ -148,7 +147,11 @@ public class TCPirateConnection extends Thread {
         m_trap_plugin = new TCPirateTrapPlugin();
         m_trap_plugin.init(this);
 
-
+        //Automatic processing
+        m_state_buffer = new ArrayList<>();
+        m_on_process_packets = new ArrayList<>();
+        m_location = new ProcessLocation();
+        m_variables = new LinkedHashMap<>();
     }
 
     private void readPirateConfiguration() {
