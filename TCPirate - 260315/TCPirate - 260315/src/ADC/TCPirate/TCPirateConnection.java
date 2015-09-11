@@ -4,6 +4,7 @@ import ADC.DBAAMessages.ChallengeRequest;
 import ADC.DBAAMessages.Message;
 import ADC.DBAAMessages.ReCAPTCHARequest;
 import ADC.DBAAMessages.Status;
+import com.sun.deploy.util.ArrayUtil;
 
 import javax.swing.*;
 import java.io.File;
@@ -15,8 +16,7 @@ import java.net.Socket;
 //import java.nio.charset.Charset;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
+import java.util.*;
 
 
 /**
@@ -47,7 +47,7 @@ public class TCPirateConnection extends Thread {
 
     // ------ Members added for automatic processing -------
     private boolean m_is_state_completed;
-    private byte[] m_state_buffer;
+    private ArrayList<byte[]> m_state_buffer;
     private boolean m_is_automatic_processing;
     private AutomaticProcessingTableModel m_automatic_processing_table;
     private LinkedHashMap<String,byte[]> m_variables;
@@ -56,8 +56,15 @@ public class TCPirateConnection extends Thread {
     private Object m_jar_class_instance;
     private byte[] m_end_of_state = new byte[]{1,4,4,0,0};
     private boolean m_still_processing;
-    private byte[] m_processing_buffer;
+    //private byte[] m_processing_buffer;
+    private ArrayList<byte[]> m_on_process_packets;
+    private ProcessLocation m_location;
     private int m_current_processing_row;
+    private int m_needed_length;
+    private int m_offset;
+    private int m_total_process_length;
+    private boolean m_should_rematch_last_packet;
+
 
     // ------ Members added for DBAA service -------
     private boolean m_use_dbaa_service;
@@ -114,6 +121,13 @@ public class TCPirateConnection extends Thread {
 
         m_trap_plugin = new TCPirateTrapPlugin();
         m_trap_plugin.init(this);
+
+        //Automatic processing
+        m_state_buffer = new ArrayList<>();
+        m_on_process_packets = new ArrayList<>();
+        m_location = new ProcessLocation();
+        m_variables = new LinkedHashMap<>();
+
     }
 
     public TCPirateConnection(TCPirate pirate) {
@@ -222,7 +236,12 @@ public class TCPirateConnection extends Thread {
 
         if (m_trap_request && m_is_automatic_processing){
             m_is_state_completed = getPacketsState();
-            updateProcessingBuffer();
+            if (!m_still_processing){
+                m_on_process_packets.clear();
+                m_location.PacketIndex = 0;
+                m_location.OnPacketIndex = 0;
+            }
+            m_on_process_packets.add(m_relay_buffer);
             processPacket();
         }
 
@@ -246,46 +265,137 @@ public class TCPirateConnection extends Thread {
             }
         }
         AutomaticProcessingRow row = m_automatic_processing_table.getRow(m_current_processing_row);
-        int length = Integer.parseInt(row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.lengthColumn)));
-        String baseString = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.baseStringColumn));
-        String packets = new String(m_processing_buffer);
-        if (baseString != ""){
-            int baseStringIndex = packets.indexOf(baseString);
-            //TODO: Ask Sara if it's ok
-            if (baseStringIndex == -1){
-                FinishProcessing();
+        if (!m_still_processing){
+            if (!getPacketInputs(row)) return;
+            if (m_total_process_length < m_needed_length){
                 return;
             }
-            if (m_processing_buffer.length - (baseStringIndex+baseString.length())  < length){
-                m_still_processing = true;
+        }
+        else {
+            if (m_relay_buffer.length + m_total_process_length <  m_needed_length){
+                m_total_process_length += m_relay_buffer.length;
                 return;
             }
-            applyAction(row, baseStringIndex + baseString.length(), length);
-            FinishProcessing();
+        }
+        //There is enough data to apply action
+        ArrayList<Integer> packets_lengths = new ArrayList<>();
+        for (int i=0; i< m_on_process_packets.size(); i++){
+            packets_lengths.add(m_on_process_packets.get(i).length);
+        }
+        byte[] process_buffer = m_on_process_packets.get(0).clone();
+        for (int i=1; i< m_on_process_packets.size(); i++){
+            byte[] temp = process_buffer.clone();
+            byte[] packet = m_on_process_packets.get(i);
+            process_buffer = new byte[temp.length + packet.length];
+            System.arraycopy(temp, 0, process_buffer, 0, temp.length);
+            System.arraycopy(packet, 0, process_buffer, 0, packet.length);
+        }
+        applyAction(row,process_buffer,m_offset,m_needed_length);
+        int process_index = 0;
+        //Copy process buffer after change (action is not read)
+        if (!(row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.actionColumn)).equals(AutomaticProcessingRow.Actions.Read))){
+            for (int i=0; i< packets_lengths.size(); i++){
+                int length = packets_lengths.get(i);
+                byte[] packet = m_on_process_packets.get(i);
+                for (int byte_index = 0; byte_index < length; byte_index++,process_index ++){
+                    packet[byte_index] = process_buffer[process_index];
+                }
+            }
+        }
+        m_should_rematch_last_packet = false;
+        if (m_on_process_packets.size() > 1 ){
+            if (m_total_process_length + m_relay_buffer.length > m_needed_length){
+                m_should_rematch_last_packet = true;
+            }
+        }
+        sendToServer();
+        //Check rematch on last packet
+        if (m_should_rematch_last_packet){
+            byte[] last_packet = m_on_process_packets.get(m_on_process_packets.size() - 1);
+            m_on_process_packets.clear();
+            m_on_process_packets.add(last_packet);
+            m_location.PacketIndex =0;
+            m_location.OnPacketIndex = m_needed_length -  m_total_process_length;
+            InitializeAutomaticProcessingFields();
+            processPacket();
         }
         else{
-            int offset = Integer.parseInt(row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.offsetColumn)));
-            if (m_processing_buffer.length - offset < length){
-                m_still_processing = true;
-                return;
-            }
-            applyAction(row, offset, length);
-            FinishProcessing();
+            m_on_process_packets.clear();
+            InitializeAutomaticProcessingFields();
         }
+
+
+
+
+
+//        String baseString = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.baseStringColumn));
+//        String last_packet = new String(m_relay_buffer);
+//        String offset_str = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.offsetColumn));
+//        int offset = offset_str == "" ? 0 : Integer.parseInt(offset_str);
+//        if (baseString != ""){
+//            int baseStringIndex = last_packet.indexOf(baseString);
+//            if (baseStringIndex == -1){
+//                FinishProcessing();
+//                return;
+//            }
+//            if (m_relay_buffer.length - (baseStringIndex+baseString.length() + offset)  < m_needed_length){
+//                m_still_processing = true;
+//                return;
+//            }
+//            applyAction(row, baseStringIndex + baseString.length(), m_needed_length);
+//            FinishProcessing();
+//        }
+//        else{
+//            if (m_relay_buffer.length - offset < m_needed_length){
+//                m_still_processing = true;
+//                return;
+//            }
+//            applyAction(row, offset, m_needed_length);
+//            FinishProcessing();
+
+//        }
+    }
+
+    //Initialize fields after apply action
+    private void InitializeAutomaticProcessingFields() {
+        m_current_processing_row = -1;
+        m_should_rematch_last_packet = false;
+        m_still_processing = false;
+        m_needed_length = -1;
+        m_offset = -1;
+        m_total_process_length = 0;
+    }
+
+    private boolean getPacketInputs(AutomaticProcessingRow row) {
+        m_needed_length = Integer.parseInt(row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.lengthColumn)));
+        String base_string = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.baseStringColumn));
+        String last_packet = new String(m_relay_buffer);
+        String offset_str = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.offsetColumn));
+        m_offset = offset_str == "" ? 0 : Integer.parseInt(offset_str);
+        if (base_string != "") {
+            int base_string_index = last_packet.indexOf(base_string);
+            if (base_string_index == -1) {
+                FinishProcessing();
+                return false;
+            }
+            m_offset = base_string_index + base_string.length() + m_offset;
+        }
+        m_total_process_length = m_relay_buffer.length - m_offset;
+        return true;
     }
 
     private void FinishProcessing() {
         sendToServer();
         if (m_is_state_completed){
-            m_state_buffer = new byte[]{};
+            m_state_buffer.clear();
         }
     }
 
-    private void applyAction(AutomaticProcessingRow row, int startIndex, int length) {
+    private void applyAction(AutomaticProcessingRow row,byte[] process_buffer, int startIndex, int length) {
         String variableName = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.variableColumn));
         if (row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.actionColumn)).equals(AutomaticProcessingRow.Actions.Read)){
             byte[] value = new byte[length];
-            System.arraycopy(m_relay_buffer,startIndex,value,0,length);
+            System.arraycopy(process_buffer,startIndex,value,0,length);
             m_variables.put(variableName,value);
             return;
         }
@@ -293,21 +403,21 @@ public class TCPirateConnection extends Thread {
             String input = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.inputColumn));
             String function = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.functionColumn));
             if (function.equals(AutomaticProcessingRow.Functions.And.toString())){
-                ApplyBitwiseAnd(startIndex, length, variableName, input);
+                ApplyBitwiseAnd(process_buffer,startIndex, length, variableName, input);
                 return;
             }
             if (function.equals(AutomaticProcessingRow.Functions.Or.toString())){
-                ApplyBitwiseOr(startIndex, length, variableName, input);
+                ApplyBitwiseOr(process_buffer,startIndex, length, variableName, input);
                 return;
             }
             if (function.equals(AutomaticProcessingRow.Functions.Plus.toString())){
-                ApplyBitwisePlus(startIndex, length, variableName, input);
+                ApplyBitwisePlus(process_buffer,startIndex, length, variableName, input);
                 return;
             }
             else{
                 //Custom modify
                 try {
-                    row.functionInstance.invoke(m_processing_buffer,m_is_state_completed, m_state_buffer,m_variables);
+                    row.functionInstance.invoke(process_buffer,m_is_state_completed, m_state_buffer,m_variables);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 } catch (InvocationTargetException e) {
@@ -318,7 +428,7 @@ public class TCPirateConnection extends Thread {
         }
     }
 
-    private void ApplyBitwisePlus(int startIndex, int length, String variableName, String input) {
+    private void ApplyBitwisePlus(byte[] process_buffer, int startIndex, int length, String variableName, String input) {
         byte[] variableValue = m_variables.get(variableName);
         byte[] inputValue = input.getBytes();
         if (inputValue.length != variableValue.length){
@@ -328,10 +438,10 @@ public class TCPirateConnection extends Thread {
         for(int i=0; i< input.length(); i++){
             res[i] = (byte) (variableValue[i] + inputValue[i]);
         }
-        System.arraycopy(res,0,m_relay_buffer,startIndex,length);
+        System.arraycopy(res,0,process_buffer,startIndex,length);
     }
 
-    private void ApplyBitwiseOr(int startIndex, int length, String variableName, String input) {
+    private void ApplyBitwiseOr(byte[] process_buffer, int startIndex, int length, String variableName, String input) {
         byte[] variableValue = m_variables.get(variableName);
         byte[] inputValue = input.getBytes();
         if (inputValue.length != variableValue.length){
@@ -341,10 +451,10 @@ public class TCPirateConnection extends Thread {
         for(int i=0; i< input.length(); i++){
             res[i] = (byte) (variableValue[i] | inputValue[i]);
         }
-        System.arraycopy(res,0,m_relay_buffer,startIndex,length);
+        System.arraycopy(res,0,process_buffer,startIndex,length);
     }
 
-    private void ApplyBitwiseAnd(int startIndex, int length, String variableName, String input) {
+    private void ApplyBitwiseAnd(byte[] process_buffer, int startIndex, int length, String variableName, String input) {
         byte[] variableValue = m_variables.get(variableName);
         byte[] inputValue = input.getBytes();
         if (inputValue.length != variableValue.length){
@@ -354,15 +464,15 @@ public class TCPirateConnection extends Thread {
         for(int i=0; i< input.length(); i++){
             res[i] = (byte) (variableValue[i] & inputValue[i]);
         }
-        System.arraycopy(res,0,m_relay_buffer,startIndex,length);
+        System.arraycopy(res,0,process_buffer,startIndex,length);
     }
 
     private int getFirstMatch() {
         try {
+            String packet = new String(m_relay_buffer).substring(m_location.OnPacketIndex,m_relay_buffer.length -1 );
             for (int index = 0; index < m_automatic_processing_table.getRowCount(); index++) {
                 AutomaticProcessingRow row = m_automatic_processing_table.getRow(index);
                 String filterRegex = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.filterColumn));
-                String packet = new String(m_relay_buffer);
                 if (!packet.matches(filterRegex)) continue;
                 if (row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.filterFunctionColumn)) != "") {
                     if (!(boolean) (row.filterFunctionInstance.invoke(m_relay_buffer, m_is_state_completed, m_state_buffer))) {
@@ -382,27 +492,38 @@ public class TCPirateConnection extends Thread {
         return -1;
     }
 
-    private void updateProcessingBuffer() {
-        if (m_still_processing){
-            byte[] temp = m_processing_buffer.clone();
-            m_processing_buffer = new byte[temp.length + m_relay_buffer.length];
-            System.arraycopy(temp,0,m_processing_buffer,0,temp.length);
-            System.arraycopy(m_relay_buffer,0,m_processing_buffer, temp.length,m_relay_buffer.length);
-        }
-        else{
-            m_processing_buffer = m_relay_buffer.clone();
-        }
-
-    }
+//    private void updateProcessingBuffer() {
+//        if (m_still_processing){
+//            byte[] temp = m_processing_buffer.clone();
+//            m_processing_buffer = new byte[temp.length + m_relay_buffer.length];
+//            System.arraycopy(temp,0,m_processing_buffer,0,temp.length);
+//            System.arraycopy(m_relay_buffer,0,m_processing_buffer, temp.length,m_relay_buffer.length);
+//        }
+//        else{
+//            m_processing_buffer = m_relay_buffer.clone();
+//        }
+//
+//    }
 
     private boolean getPacketsState(){
-        byte[] temp = m_state_buffer.clone();
-        int newSize = temp.length + m_relay_buffer.length;
-        m_state_buffer = new byte[newSize];
-        if (temp.length != 0){
-            System.arraycopy(temp,0,m_state_buffer,0,temp.length);
+//        byte[] temp = m_state_buffer.clone();
+//        int newSize = temp.length + m_relay_buffer.length;
+//        m_state_buffer = new byte[newSize];
+//        if (temp.length != 0){
+//            System.arraycopy(temp,0,m_state_buffer,0,temp.length);
+//        }
+//        System.arraycopy(m_relay_buffer,0,m_state_buffer,temp.length,m_relay_buffer.length);
+//        int initialBufferIndex = m_relay_buffer.length - m_end_of_state.length;
+//        if (initialBufferIndex + m_end_of_state.length < m_relay_buffer.length || initialBufferIndex < 0) return false;
+//        for (int index = 0; index < m_end_of_state.length; index++){
+//            if (m_relay_buffer[index+initialBufferIndex]!= m_end_of_state[index])
+//                return false;
+//        }
+//        return true;
+        if (m_state_buffer == null){
+            m_state_buffer = new ArrayList();
         }
-        System.arraycopy(m_relay_buffer,0,m_state_buffer,temp.length,m_relay_buffer.length);
+        m_state_buffer.add(m_relay_buffer.clone());
         int initialBufferIndex = m_relay_buffer.length - m_end_of_state.length;
         if (initialBufferIndex + m_end_of_state.length < m_relay_buffer.length || initialBufferIndex < 0) return false;
         for (int index = 0; index < m_end_of_state.length; index++){
@@ -411,6 +532,7 @@ public class TCPirateConnection extends Thread {
         }
         return true;
     }
+
 
     private boolean dbaaPolicyTriggered(byte[] relay_buffer) {
         try {
@@ -498,9 +620,15 @@ public class TCPirateConnection extends Thread {
     public void sendToServer() {
         try {
             if (m_is_automatic_processing){
-                int size = m_processing_buffer.length;
-                dumpBufferToSocket(m_processing_buffer, size, m_out_socket.getOutputStream());
-                dumpBufferToFile(m_processing_buffer, size, messageFileName(true));
+                int packets_count = m_on_process_packets.size();
+                for (int i = 0; i< packets_count; i++){
+                    if (i == packets_count -1 && m_should_rematch_last_packet) continue;
+                    byte[] packet = m_on_process_packets.get(i);
+                    int size = packet.length;
+                    dumpBufferToSocket(packet, size, m_out_socket.getOutputStream());
+                    dumpBufferToFile(packet, size, messageFileName(true));
+                }
+
             }
             if (m_hex_editor.isChanged()) {
                 byte[] data = m_hex_editor.getData();
@@ -718,9 +846,6 @@ public class TCPirateConnection extends Thread {
                     Class classToLoad = Class.forName(m_jar_class, true, child);
                     m_jar_class_instance = classToLoad.newInstance();
                 }
-
-                m_variables = new LinkedHashMap<>();
-
             }
 
             // Create a socket to the server
