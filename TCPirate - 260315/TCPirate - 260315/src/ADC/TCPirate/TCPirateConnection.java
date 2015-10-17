@@ -54,15 +54,21 @@ public class TCPirateConnection extends Thread {
     private String m_jar_path;
     private String m_jar_class;
     private Object m_jar_class_instance;
-    private byte[] m_end_of_state = new byte[]{1,4,4,0,0};
+    private ArrayList<byte[]> m_end_of_state;
     private boolean m_still_processing;
     private ArrayList<byte[]> m_on_process_packets;
     private ProcessLocation m_location;
     private int m_current_processing_row;
+    //needed length to perform processing
     private int m_needed_length;
+    //Offset from base string or first packet start
     private int m_offset;
+    // current packet length of bytes that can be processed.
     private int m_total_process_length;
+    //Rematch last packet if there are bytes that were not scanned
     private boolean m_should_rematch_last_packet;
+    //Next index on current packets to rematch
+    private  int m_next_index_to_match;
 
 
     // ------ Members added for DBAA service -------
@@ -126,7 +132,9 @@ public class TCPirateConnection extends Thread {
         m_on_process_packets = new ArrayList<>();
         m_location = new ProcessLocation();
         m_variables = new LinkedHashMap<>();
-
+        m_end_of_state = new ArrayList<>();
+        m_end_of_state.add(new byte[]{114,1,0,0}); //72 01 00 00
+        m_end_of_state.add(new byte[]{114,2,0,0});//72 02 00 00
     }
 
     public TCPirateConnection(TCPirate pirate) {
@@ -239,13 +247,10 @@ public class TCPirateConnection extends Thread {
 
         if (m_trap_request && m_is_automatic_processing){
             m_is_state_completed = getPacketsState();
-            if (!m_still_processing){
-                m_on_process_packets.clear();
-                m_location.PacketIndex = 0;
-                m_location.OnPacketIndex = 0;
-            }
-            m_on_process_packets.add(m_relay_buffer);
+            //Copying the packet to the process packets
+            m_on_process_packets.add(Arrays.copyOfRange(m_relay_buffer,0,m_relay_current_pos));
             processPacket();
+            return;
         }
 
         if (m_trap_request || m_trap_plugin.shouldTrap(m_relay_buffer, TCPirateTrapPlugin.TRAP_DIR_TO_SERVER)) {
@@ -258,26 +263,48 @@ public class TCPirateConnection extends Thread {
 
     }
 
-
+    /**
+     * Main method of automatic processing
+     */
     private void processPacket() {
         if (!m_still_processing){
+            //New processing session
             m_current_processing_row = getFirstMatch();
             if (m_current_processing_row == -1){
+                //There is not match of any of the rows in the table
                 FinishProcessing();
                 return;
             }
         }
         AutomaticProcessingRow row = m_automatic_processing_table.getRow(m_current_processing_row);
+        //Converts byte array to hex string with spaces between bytes
+        String last_packet = BytesToHex(Arrays.copyOfRange(m_relay_buffer, m_location.OnPacketIndex, m_relay_current_pos));
         if (!m_still_processing){
-            if (!getPacketInputs(row)) return;
+            if (!getPacketInputs(row, last_packet)) {
+                //Can't get packet inputs - finish processing
+                FinishProcessing();
+                return;
+            }
             if (m_total_process_length < m_needed_length){
+                //Wait for more packets to perform processing
+                m_still_processing = true;
                 return;
             }
         }
         else {
-            if (m_relay_buffer.length + m_total_process_length <  m_needed_length){
-                m_total_process_length += m_relay_buffer.length;
+            //Still processing is on - need to add this packet to the on processing packets
+            int last_packet_length = last_packet.length();
+            int new_processing_length = last_packet_length + m_total_process_length +1; //+1 for space between the strings.
+            if (new_processing_length <  m_needed_length){
+                m_total_process_length = new_processing_length;
+                m_still_processing = true;
                 return;
+            }
+            if (new_processing_length > m_needed_length){
+                m_should_rematch_last_packet = true;
+                int num_chars_used_in_packet = m_needed_length - m_total_process_length -1;
+                String chars_used_without_space = last_packet.substring(0,num_chars_used_in_packet).replaceAll("\\s","");
+                m_next_index_to_match = chars_used_without_space.length() / 2;
             }
         }
         //There is enough data to apply action
@@ -285,13 +312,14 @@ public class TCPirateConnection extends Thread {
         for (int i=0; i< m_on_process_packets.size(); i++){
             packets_lengths.add(m_on_process_packets.get(i).length);
         }
+        //Concat all packets to one byte array
         byte[] process_buffer = m_on_process_packets.get(0).clone();
         for (int i=1; i< m_on_process_packets.size(); i++){
             byte[] temp = process_buffer.clone();
-            byte[] packet = m_on_process_packets.get(i);
-            process_buffer = new byte[temp.length + packet.length];
+            byte[] current_packet = m_on_process_packets.get(i);
+            process_buffer = new byte[temp.length + current_packet.length];
             System.arraycopy(temp, 0, process_buffer, 0, temp.length);
-            System.arraycopy(packet, 0, process_buffer, 0, packet.length);
+            System.arraycopy(current_packet, 0, process_buffer, 0, current_packet.length);
         }
         applyAction(row,process_buffer,m_offset,m_needed_length);
         int process_index = 0;
@@ -302,96 +330,120 @@ public class TCPirateConnection extends Thread {
                 byte[] packet = m_on_process_packets.get(i);
                 for (int byte_index = 0; byte_index < length; byte_index++,process_index ++){
                     packet[byte_index] = process_buffer[process_index];
+                    if (i == packets_lengths.size() - 1){
+                        m_relay_buffer[byte_index] = process_buffer[process_index];
+                    }
                 }
-            }
-        }
-        m_should_rematch_last_packet = false;
-        if (m_on_process_packets.size() > 1 ){
-            if (m_total_process_length + m_relay_buffer.length > m_needed_length){
-                m_should_rematch_last_packet = true;
             }
         }
         sendToServer();
         //Check rematch on last packet
         if (m_should_rematch_last_packet){
-            byte[] last_packet = m_on_process_packets.get(m_on_process_packets.size() - 1);
-            m_on_process_packets.clear();
-            m_on_process_packets.add(last_packet);
-            m_location.PacketIndex =0;
-            m_location.OnPacketIndex = m_needed_length -  m_total_process_length;
+            byte[] last_packet_bytes = m_on_process_packets.get(m_on_process_packets.size() - 1);
+            int next_index_to_match = m_next_index_to_match;
             InitializeAutomaticProcessingFields();
+            m_on_process_packets.add(last_packet_bytes);
+            m_location.OnPacketIndex = next_index_to_match;
+            m_relay_current_pos = last_packet_bytes.length;
             processPacket();
         }
         else{
-            m_on_process_packets.clear();
+            if (m_is_state_completed){
+                m_state_buffer.clear();
+            }
             InitializeAutomaticProcessingFields();
         }
+    }
 
 
+    /**
+     * Used in BytesToHex method
+     */
+    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 
+    /**
+     * Convert byte array to string with space between bytes.
+     * @param bytes - Array of bytes
+     * @return Hex string of the given bytes array
+     */
+    public static String BytesToHex(byte[] bytes) {
+        int string_length = bytes.length * 2 + bytes.length -1;
+        char[] hexChars = new char[string_length];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 3] = hexArray[v >>> 4];
+            hexChars[j * 3 + 1] = hexArray[v & 0x0F];
+            if (j*3+2 < string_length)
+            {
+                hexChars[j * 3 + 2] = ' ';
+            }
+        }
+        return new String(hexChars);
+    }
 
-
-//        String baseString = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.baseStringColumn));
-//        String last_packet = new String(m_relay_buffer);
-//        String offset_str = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.offsetColumn));
-//        int offset = offset_str == "" ? 0 : Integer.parseInt(offset_str);
-//        if (baseString != ""){
-//            int baseStringIndex = last_packet.indexOf(baseString);
-//            if (baseStringIndex == -1){
-//                FinishProcessing();
-//                return;
-//            }
-//            if (m_relay_buffer.length - (baseStringIndex+baseString.length() + offset)  < m_needed_length){
-//                m_still_processing = true;
-//                return;
-//            }
-//            applyAction(row, baseStringIndex + baseString.length(), m_needed_length);
-//            FinishProcessing();
-//        }
-//        else{
-//            if (m_relay_buffer.length - offset < m_needed_length){
-//                m_still_processing = true;
-//                return;
-//            }
-//            applyAction(row, offset, m_needed_length);
-//            FinishProcessing();
-
-//        }
+    /**
+     * Converts string of two digit hex with spaces between them to byte array
+     * @param hex - Hex string of bytes with space between them (each byte is two hex digits)
+     * @return
+     */
+    public static byte[] HexToBytes(String hex){
+        String clean_hex = hex.replaceAll("\\s","");
+        int num_of_bytes = clean_hex.length() / 2;
+        byte[] bytes = new byte[num_of_bytes];
+        String[] bytes_hex = hex.split("\\s");
+        for (int i=0; i<bytes_hex.length; i++)
+        {
+            bytes[i] = (byte) (Integer.parseInt(bytes_hex[i],16) & 0xff);
+        }
+        return bytes;
     }
 
     //Initialize fields after apply action
     private void InitializeAutomaticProcessingFields() {
+        m_on_process_packets.clear();
         m_current_processing_row = -1;
         m_should_rematch_last_packet = false;
+        m_next_index_to_match = -1;
         m_still_processing = false;
         m_needed_length = -1;
         m_offset = -1;
         m_total_process_length = 0;
     }
 
-    private boolean getPacketInputs(AutomaticProcessingRow row) {
+
+    /**
+     * Initialize all inputs to process packet
+     * @param row - Matching row in automatic processing table
+     * @param last_packet - string of last packet received (Hex string with spaces between bytes)
+     * @return True if we can continue processing , false if base string was not found
+     */
+    private boolean getPacketInputs(AutomaticProcessingRow row, String last_packet) {
         m_needed_length = Integer.parseInt(row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.lengthColumn)));
         String base_string = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.baseStringColumn));
-        String last_packet = new String(m_relay_buffer);
         String offset_str = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.offsetColumn));
-        m_offset = offset_str == "" ? 0 : Integer.parseInt(offset_str);
-        if (base_string != "") {
+        m_offset = offset_str == null || offset_str.isEmpty() ? 0 : Integer.parseInt(offset_str);
+        if (base_string != null && !base_string.isEmpty()) {
             int base_string_index = last_packet.indexOf(base_string);
             if (base_string_index == -1) {
-                FinishProcessing();
                 return false;
             }
             m_offset = base_string_index + base_string.length() + m_offset;
         }
-        m_total_process_length = m_relay_buffer.length - m_offset;
+        //Number of chars we can process from current packet (hex string with spaces between bytes)
+        m_total_process_length = last_packet.length() - m_offset;
         return true;
     }
 
+    /**
+     * Sends all packets in buffer to the server and clears relevant variables;
+     */
     private void FinishProcessing() {
         sendToServer();
         if (m_is_state_completed){
             m_state_buffer.clear();
         }
+        m_on_process_packets.clear();
+        InitializeAutomaticProcessingFields();
     }
 
     private void applyAction(AutomaticProcessingRow row,byte[] process_buffer, int startIndex, int length) {
@@ -433,9 +485,9 @@ public class TCPirateConnection extends Thread {
 
     private void ApplyBitwisePlus(byte[] process_buffer, int startIndex, int length, String variableName, String input) {
         byte[] variableValue = m_variables.get(variableName);
-        byte[] inputValue = input.getBytes();
+        byte[] inputValue = HexToBytes(input);
         if (inputValue.length != variableValue.length){
-            //TODO: throw exception
+            throw new IllegalArgumentException("Cannot apply Plus operation, value and input length are not equal");
         }
         byte[] res = new byte[input.length()];
         for(int i=0; i< input.length(); i++){
@@ -446,9 +498,9 @@ public class TCPirateConnection extends Thread {
 
     private void ApplyBitwiseOr(byte[] process_buffer, int startIndex, int length, String variableName, String input) {
         byte[] variableValue = m_variables.get(variableName);
-        byte[] inputValue = input.getBytes();
+        byte[] inputValue = HexToBytes(input);
         if (inputValue.length != variableValue.length){
-            //TODO: throw exception
+            throw new IllegalArgumentException("Cannot apply Or operation, value and input length are not equal");
         }
         byte[] res = new byte[input.length()];
         for(int i=0; i< input.length(); i++){
@@ -459,9 +511,9 @@ public class TCPirateConnection extends Thread {
 
     private void ApplyBitwiseAnd(byte[] process_buffer, int startIndex, int length, String variableName, String input) {
         byte[] variableValue = m_variables.get(variableName);
-        byte[] inputValue = input.getBytes();
+        byte[] inputValue = HexToBytes(input);
         if (inputValue.length != variableValue.length){
-            //TODO: throw exception
+            throw new IllegalArgumentException("Cannot apply And operation, value and input length are not equal");
         }
         byte[] res = new byte[input.length()];
         for(int i=0; i< input.length(); i++){
@@ -470,15 +522,21 @@ public class TCPirateConnection extends Thread {
         System.arraycopy(res,0,process_buffer,startIndex,length);
     }
 
+    /**
+     * Check if current buffer matches any row in automatic processing table
+     * @return number of first matching row or -1 if there is no match
+     */
     private int getFirstMatch() {
         try {
-            String packet = new String(m_relay_buffer).substring(m_location.OnPacketIndex,m_relay_buffer.length -1 );
+            String packet = BytesToHex(Arrays.copyOfRange(m_relay_buffer,m_location.OnPacketIndex,m_relay_current_pos));
             for (int index = 0; index < m_automatic_processing_table.getRowCount(); index++) {
                 AutomaticProcessingRow row = m_automatic_processing_table.getRow(index);
-                String filterRegex = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.filterColumn));
+                String filterRegex = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.filterColumn)).toUpperCase();
                 if (!packet.matches(filterRegex)) continue;
-                if (row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.filterFunctionColumn)) != "") {
-                    if (!(boolean) (row.filterFunctionInstance.invoke(m_relay_buffer, m_is_state_completed, m_state_buffer))) {
+                String filter_function_name = row.get(AutomaticProcessingTableModel.columns.get(AutomaticProcessingTableModel.filterFunctionColumn));
+                if (filter_function_name != null && !filter_function_name.isEmpty()) {
+                    //Invoke user defined method
+                    if (!(boolean) (row.filterFunctionInstance.invoke(m_relay_buffer,m_relay_current_pos, m_is_state_completed, m_state_buffer))) {
                         continue;
                     }
                     return index;
@@ -495,45 +553,31 @@ public class TCPirateConnection extends Thread {
         return -1;
     }
 
-//    private void updateProcessingBuffer() {
-//        if (m_still_processing){
-//            byte[] temp = m_processing_buffer.clone();
-//            m_processing_buffer = new byte[temp.length + m_relay_buffer.length];
-//            System.arraycopy(temp,0,m_processing_buffer,0,temp.length);
-//            System.arraycopy(m_relay_buffer,0,m_processing_buffer, temp.length,m_relay_buffer.length);
-//        }
-//        else{
-//            m_processing_buffer = m_relay_buffer.clone();
-//        }
-//
-//    }
 
+    /**
+     *This function adds the current packet to state buffer and check if this packet has
+     * end of state suffix.
+     * @return boolean indicates if the current packet ends with end of state bytes
+     */
     private boolean getPacketsState(){
-//        byte[] temp = m_state_buffer.clone();
-//        int newSize = temp.length + m_relay_buffer.length;
-//        m_state_buffer = new byte[newSize];
-//        if (temp.length != 0){
-//            System.arraycopy(temp,0,m_state_buffer,0,temp.length);
-//        }
-//        System.arraycopy(m_relay_buffer,0,m_state_buffer,temp.length,m_relay_buffer.length);
-//        int initialBufferIndex = m_relay_buffer.length - m_end_of_state.length;
-//        if (initialBufferIndex + m_end_of_state.length < m_relay_buffer.length || initialBufferIndex < 0) return false;
-//        for (int index = 0; index < m_end_of_state.length; index++){
-//            if (m_relay_buffer[index+initialBufferIndex]!= m_end_of_state[index])
-//                return false;
-//        }
-//        return true;
         if (m_state_buffer == null){
             m_state_buffer = new ArrayList();
         }
-        m_state_buffer.add(m_relay_buffer.clone());
-        int initialBufferIndex = m_relay_buffer.length - m_end_of_state.length;
-        if (initialBufferIndex + m_end_of_state.length < m_relay_buffer.length || initialBufferIndex < 0) return false;
-        for (int index = 0; index < m_end_of_state.length; index++){
-            if (m_relay_buffer[index+initialBufferIndex]!= m_end_of_state[index])
-                return false;
+        m_state_buffer.add(Arrays.copyOfRange(m_relay_buffer,0,m_relay_current_pos));
+        for ( int i=0; i< m_end_of_state.size(); i++)
+        {
+            byte[] end_of_state = m_end_of_state.get(i);
+            int initialBufferIndex = m_relay_current_pos - end_of_state.length;
+            if (initialBufferIndex + end_of_state.length > m_relay_current_pos || initialBufferIndex < 0) continue;
+            boolean is_end_of_state = true;
+            for (int index = 0; index < end_of_state.length; index++){
+                if (m_relay_buffer[index+initialBufferIndex]!= end_of_state[index])
+                    is_end_of_state = false;
+                    break;
+            }
+            if (is_end_of_state) return true;
         }
-        return true;
+        return false;
     }
 
 
@@ -625,13 +669,16 @@ public class TCPirateConnection extends Thread {
             if (m_is_automatic_processing){
                 int packets_count = m_on_process_packets.size();
                 for (int i = 0; i< packets_count; i++){
+                    //Hold current packet because need to rematch the rest of it
                     if (i == packets_count -1 && m_should_rematch_last_packet) continue;
                     byte[] packet = m_on_process_packets.get(i);
                     int size = packet.length;
                     dumpBufferToSocket(packet, size, m_out_socket.getOutputStream());
                     dumpBufferToFile(packet, size, messageFileName(true));
+                    m_current_message++;
                 }
-
+                clearRelayBuffer();
+                return;
             }
             if (m_hex_editor.isChanged()) {
                 byte[] data = m_hex_editor.getData();
@@ -842,7 +889,7 @@ public class TCPirateConnection extends Thread {
             //Prepare  for automatic processing
             if (m_is_automatic_processing) {
                 //Load jar
-                if (m_jar_path != "" && m_jar_class != "") {
+                if ( m_jar_path != null && !m_jar_path.isEmpty() && m_jar_class != null && !m_jar_class.isEmpty()) {
                     File jarFile = new File(m_jar_path);
                     URL jarUrl = jarFile.toURI().toURL();
                     URLClassLoader child = new URLClassLoader(new URL[]{jarUrl}, this.getClass().getClassLoader());

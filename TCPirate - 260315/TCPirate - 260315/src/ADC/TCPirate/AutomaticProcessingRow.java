@@ -3,6 +3,7 @@ package ADC.TCPirate;
 import com.sun.org.apache.bcel.internal.generic.SWITCH;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.LinkedHashMap;
 
@@ -91,11 +92,11 @@ public class AutomaticProcessingRow {
 
     public void loadFunctions(Class jarClass){
         try {
-            if (filterFunction != "") {
-                filterFunctionInstance = jarClass.getDeclaredMethod(filterFunction, byte[].class, boolean.class, byte[].class);
+            if (filterFunction != null && !filterFunction.isEmpty()) {
+                filterFunctionInstance = jarClass.getDeclaredMethod(filterFunction, byte[].class,int.class, boolean.class, ArrayList.class);
             }
             if (isCustomFunction()) {
-                functionInstance = jarClass.getDeclaredMethod(functionInput, byte[].class, boolean.class, byte[].class, LinkedHashMap.class);
+                functionInstance = jarClass.getDeclaredMethod(functionInput, byte[].class, boolean.class, ArrayList.class, LinkedHashMap.class);
             }
         }catch (NoSuchMethodException e) {
             e.printStackTrace();
